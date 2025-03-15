@@ -14,17 +14,25 @@ export default function OpenChallenges({
 
   useEffect(() => {
     async function fetchOpenDuels() {
-      const res = await fetch("/api/duel/duels");
-      const data = await res.json();
-      setDuels(data.duels);
-      setLoading(false);
+      try {
+        const res = await fetch("/api/duel/duels");
+        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+
+        const data = await res.json();
+        setDuels(data.duels || []); // Fallback auf leeres Array
+      } catch (error) {
+        console.error("Fehler beim Laden der Duelle:", error);
+        setDuels([]); // Falls Fehler auftritt, leeres Array setzen
+      } finally {
+        setLoading(false);
+      }
     }
 
     fetchOpenDuels();
   }, []);
 
   if (loading) return <p>Lade...</p>;
-  if (!duels.length) return <p>Keine offenen Herausforderungen.</p>;
+  if (!duels?.length) return <p>Keine offenen Herausforderungen.</p>;
 
   return (
     <div className="bg-gray-100 p-4 rounded shadow-md">

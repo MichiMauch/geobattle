@@ -34,7 +34,6 @@ export default function Home() {
           </button>
         )}
       </div>
-
       <OpenChallenges setActiveDuelId={setActiveDuelId} />
       <GeoBattle
         activeDuelId={activeDuelId}
