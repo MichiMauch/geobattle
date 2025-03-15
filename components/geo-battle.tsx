@@ -114,7 +114,7 @@ export default function GeoBattle({
   }
 
   const saveScore = async () => {
-    if (!session?.user?.name) return; // Ensure userName is a string
+    if (!session?.user?.name || activeDuelId !== null) return; // Ensure userName is a string and not in a duel
 
     await fetch("/api/highscore", {
       method: "POST",
