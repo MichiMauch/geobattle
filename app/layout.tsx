@@ -1,12 +1,8 @@
-import type { Metadata } from "next";
+import type React from "react";
+import Header from "@/components/layouts/Header";
+import SubHeader from "@/components/layouts/SubHeader";
 import "./globals.css";
 import Providers from "@/components/Providers";
-
-export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.dev",
-};
 
 export default function RootLayout({
   children,
@@ -16,7 +12,11 @@ export default function RootLayout({
   return (
     <html lang="de">
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          <Header />
+          <SubHeader />
+          {children}
+        </Providers>
       </body>
     </html>
   );

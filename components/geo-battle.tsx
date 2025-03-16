@@ -7,6 +7,7 @@ import { getRandomCity } from "@/lib/cities";
 import { calculateDistance } from "@/lib/distance";
 import type { City } from "@/types/game";
 import HighscoreList from "@/components/highscore-list";
+import { useGameContext } from "@/context/game-context";
 
 export default function GeoBattle({
   activeDuelId,
@@ -15,6 +16,7 @@ export default function GeoBattle({
   activeDuelId: number | null;
   setActiveDuelId: (id: number | null) => void;
 }) {
+  const { updateRound, updateMaxRounds, updateScore } = useGameContext();
   const [currentCity, setCurrentCity] = useState<City | null>(null);
   const [selectedPoint, setSelectedPoint] = useState<[number, number] | null>(
     null
@@ -35,7 +37,18 @@ export default function GeoBattle({
 
   useEffect(() => {
     startNewRound();
+    // Initialize the context with the game's initial values
+    updateMaxRounds(MAX_ROUNDS);
   }, []);
+
+  // Update the context whenever round or score changes
+  useEffect(() => {
+    updateRound(round);
+  }, [round, updateRound]);
+
+  useEffect(() => {
+    updateScore(score);
+  }, [score, updateScore]);
 
   useEffect(() => {
     if (activeDuelId !== null) {
@@ -142,21 +155,12 @@ export default function GeoBattle({
 
   return (
     <div className="flex flex-col h-screen relative">
-      <div className="p-4 bg-white z-10">
-        <div className="text-center mb-4">
-          <h1 className="text-3xl font-bold mb-2">GeoBattle: Switzerland</h1>
-          <div className="flex justify-between items-center">
-            <div className="text-lg font-medium">
-              Runde: {round}/{MAX_ROUNDS}
-            </div>
-            <div className="text-lg font-medium">Punkte: {score}</div>
-          </div>
-          {currentCity && !showResult && (
-            <h2 className="text-xl font-semibold mt-2">
-              Wo liegt {currentCity.name}?
-            </h2>
-          )}
-        </div>
+      <div className="text-center">
+        {currentCity && !showResult && (
+          <h2 className="text-xl font-semibold">
+            Wo liegt {currentCity.name}?
+          </h2>
+        )}
       </div>
 
       <div className="flex-1 relative z-0">
@@ -165,6 +169,19 @@ export default function GeoBattle({
           selectedPoint={selectedPoint}
           actualCity={showResult ? currentCity : null}
         />
+        <div className="flex flex-col items-center text-center space-y-2">
+          <div className="text-lg font-medium">
+            Runde: {round}/{MAX_ROUNDS}
+          </div>
+          <div className="text-lg font-medium">Punkte: {score}</div>
+
+          {currentCity && !showResult && (
+            <h2 className="text-xl font-semibold mt-2">
+              Wo liegt {currentCity.name}?
+            </h2>
+          )}
+        </div>
+
         {gameOver && (
           <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]">
             <div className="bg-white p-6 rounded shadow-lg text-center">
@@ -185,6 +202,7 @@ export default function GeoBattle({
 
               <HighscoreList
                 currentUserName={session?.user?.name || "Unknown User"}
+                currentUserEmail={session?.user?.email || "unknown@example.com"}
                 currentUserScore={score}
                 highscoreUpdated={highscoreUpdated} // Neuer Prop für Aktualisierung
               />

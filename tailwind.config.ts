@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import colors from "tailwindcss/colors";
+
 
 const config: Config = {
     darkMode: ["class"],
@@ -11,7 +13,22 @@ const config: Config = {
   theme: {
   	extend: {
   		colors: {
-  			background: 'hsl(var(--background))',
+			primary: "#ED22B6", // Standardfarbe ist Fuchsia-500
+        	fuchsia: colors.fuchsia, // Ganze Fuchsia-Palette verfügbar
+			geobattle: "#19152D", // Deine benutzerdefinierte Farbe
+			main: {
+				dark1: '#1b162e', // Dunkelviolett / Nachtblau
+				dark2: '#1a162e', // Sehr dunkles Lila-Blau
+				dark3: '#1c1635', // Tiefer Violettton
+				dark4: '#1c1634', // Dunkles Purpur
+				dark5: '#1b1634', // Fast schwarzes Violett
+				pink: '#ff40b4',  // Leuchtendes Pink (Akzentfarbe)
+				purple: '#7a2db8', // Sattes Lila (Verlauf)
+				blue: '#1e90ff',   // Helles Blau (Verlauf)
+				gradientStart: '#ff40b4', // Startfarbe des Farbverlaufs
+				gradientEnd: '#1e90ff',   // Endfarbe des Farbverlaufs
+			  },
+			background: 'hsl(var(--background))',
   			foreground: 'hsl(var(--foreground))',
   			card: {
   				DEFAULT: 'hsl(var(--card))',
@@ -20,10 +37,6 @@ const config: Config = {
   			popover: {
   				DEFAULT: 'hsl(var(--popover))',
   				foreground: 'hsl(var(--popover-foreground))'
-  			},
-  			primary: {
-  				DEFAULT: 'hsl(var(--primary))',
-  				foreground: 'hsl(var(--primary-foreground))'
   			},
   			secondary: {
   				DEFAULT: 'hsl(var(--secondary))',
