@@ -22,9 +22,42 @@
 
 ---
 
+## 📊 Scoring System in GeoBattle
+
+Points are calculated based on the distance between your selected location and the actual position.
+
+### 🔢 **Scoring Formula**
+
+- **Maximum 1000 points** if you place the marker exactly right.
+- **Deduction: 20 points per kilometer of distance**.
+- **Minimum 0 points** (negative scores are not possible).
+
+### 📌 **Example Score Calculation**
+
+| Distance from Correct Location | Calculation              | Awarded Points  |
+| ------------------------------ | ------------------------ | --------------- |
+| **0 km** (perfect placement)   | `1000 - (0 * 20) = 1000` | **1000** points |
+| **5 km away**                  | `1000 - (5 * 20) = 900`  | **900** points  |
+| **20 km away**                 | `1000 - (20 * 20) = 600` | **600** points  |
+| **50 km away**                 | `1000 - (50 * 20) = 0`   | **0** points    |
+| **100 km or more away**        | `1000 - (100 * 20) = 0`  | **0** points    |
+
+---
+
+### 🎯 **Summary**
+
+- **The closer you are, the more points you get.**
+- **No points are awarded beyond ~50 km.**
+- **Maximum of 1000 points per round.**
+- **Scores accumulate over multiple rounds.**
+
+If you want to adjust the scoring system (e.g., reduce penalties), modify the **`1000 - dist * 20`** formula in your code! 🚀
+
+---
+
 GeoBattle is perfect for anyone who loves geography and wants to improve their map knowledge. Are you ready to test your skills? 🌎🔥
 
-## Features
+## Tech-Features
 
 - Login with Google Account
 - Single Player Mode

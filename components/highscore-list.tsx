@@ -1,6 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+import Overlay from "./Overlay"; // Add this import
 
 interface Highscore {
   userName: string;
@@ -25,6 +27,10 @@ export default function HighscoreList({
   const [opponentEmail, setOpponentEmail] = useState("");
   const [message, setMessage] = useState<string | null>(null);
   const [showChallengeForm, setShowChallengeForm] = useState(false);
+  const [showSuccessOverlay, setShowSuccessOverlay] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [challengeSent, setChallengeSent] = useState(false);
+  const [lastChallengedEmail, setLastChallengedEmail] = useState("");
 
   useEffect(() => {
     async function fetchHighscores() {
@@ -87,6 +93,9 @@ export default function HighscoreList({
       return;
     }
 
+    setIsSubmitting(true);
+    setMessage(null);
+
     try {
       const payload = {
         challengerUserId: currentUserEmail, // Korrekte E-Mail als ID
@@ -109,17 +118,65 @@ export default function HighscoreList({
       }
 
       const result = await response.json();
-      setMessage("Herausforderung erfolgreich gesendet!");
+      setLastChallengedEmail(opponentEmail); // Save the email for the overlay
+      setShowSuccessOverlay(true); // Show the overlay
       setOpponentEmail(""); // Reset nach erfolgreicher Eingabe
       setShowChallengeForm(false);
+      setChallengeSent(true); // Set challenge as sent
     } catch (error) {
       console.error("Fehler beim Senden der Herausforderung:", error);
       setMessage("Fehler beim Speichern. Bitte erneut versuchen.");
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
+  const closeSuccessOverlay = () => {
+    setShowSuccessOverlay(false);
+  };
+
+  const closeChallengeForm = () => {
+    setShowChallengeForm(false);
+    setMessage(null);
+    setOpponentEmail("");
+  };
+
   return (
     <div className="text-center mb-6">
+      {/* Herausforderung senden (nur anzeigen, wenn ein Score existiert) */}
+      {currentUserScore > 0 && (
+        <div className="mb-6">
+          <button
+            className={`px-4 py-2 w-full rounded ${
+              challengeSent
+                ? "bg-gray-400 cursor-not-allowed"
+                : "bg-main-pink hover:bg-fuchsia-800"
+            } text-white`}
+            onClick={() => setShowChallengeForm(true)}
+            disabled={challengeSent}
+          >
+            {challengeSent
+              ? "Herausforderung bereits gesendet"
+              : "Jemanden herausfordern"}
+          </button>
+        </div>
+      )}
+
+      {/* Dein Platz - jetzt vor der Rangliste */}
+      {currentUserHighscore && (
+        <div className="mb-6">
+          <h3 className="text-lg font-semibold mb-3">Dein Platz</h3>
+          <div className="text-fuchsia-600 flex justify-between items-center bg-gray-50 p-3 rounded">
+            <span>
+              {actualRank}. {currentUserHighscore.userName}
+            </span>
+            <span className="font-medium">
+              {currentUserHighscore.score} Punkte
+            </span>
+          </div>
+        </div>
+      )}
+
       <h2 className="text-lg font-semibold mb-3">Highscore Liste</h2>
       <div className="space-y-2">
         {topThreeHighscores.map((highscore, index) => (
@@ -135,50 +192,75 @@ export default function HighscoreList({
         ))}
       </div>
 
-      {currentUserHighscore && (
-        <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Dein Platz</h3>
-          <div className="text-fuchsia-600 flex justify-between items-center bg-gray-50 p-3 rounded">
-            <span>
-              {actualRank}. {currentUserHighscore.userName}
-            </span>
-            <span className="font-medium">
-              {currentUserHighscore.score} Punkte
-            </span>
-          </div>
-        </div>
-      )}
+      {/* Challenge Form Overlay */}
+      <Overlay
+        isOpen={showChallengeForm}
+        onClose={closeChallengeForm}
+        title="Spieler herausfordern"
+      >
+        <p className="mb-4">
+          Gib die E-Mail-Adresse des Spielers ein, den du herausfordern
+          möchtest.
+        </p>
 
-      {/* Herausforderung senden (nur anzeigen, wenn ein Score existiert) */}
-      {currentUserScore > 0 && (
-        <div className="mt-6">
-          <button
-            className="bg-main-blue text-white px-4 py-2 w-full rounded hover:bg-main-blueDarker2"
-            onClick={() => setShowChallengeForm(true)}
-          >
-            Jemanden herausfordern
-          </button>
-        </div>
-      )}
-
-      {showChallengeForm && (
-        <div className="mt-4">
+        <div className="mb-4">
           <input
             type="email"
             value={opponentEmail}
             onChange={(e) => setOpponentEmail(e.target.value)}
             placeholder="E-Mail des Gegners"
-            className="border p-2 rounded w-full mb-2"
+            className="border p-2 rounded w-full mb-2 bg-gray-800 border-gray-700 text-white"
+            disabled={isSubmitting}
           />
-          <button
-            className="bg-main-pink text-white px-4 py-2 rounded w-full hover:bg-fuchsia-800 "
-            onClick={handleChallengeSubmit}
-          >
-            Herausforderung senden
-          </button>
-          {message && <p className="mt-2 text-sm text-gray-700">{message}</p>}
+          {message && <p className="mt-2 text-sm text-red-400">{message}</p>}
         </div>
-      )}
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={handleChallengeSubmit}
+            disabled={isSubmitting}
+            className="px-6 py-2 bg-main-pink text-white rounded-md w-full transition-all hover:bg-fuchsia-800 flex items-center justify-center"
+          >
+            {isSubmitting ? (
+              <>
+                <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                Wird gesendet...
+              </>
+            ) : (
+              "Herausforderung senden"
+            )}
+          </button>
+
+          <button
+            onClick={closeChallengeForm}
+            className="px-6 py-2 bg-transparent border border-main-blue text-white rounded-md w-full transition-all hover:bg-main-blue/20"
+          >
+            Abbrechen
+          </button>
+        </div>
+      </Overlay>
+
+      {/* Success Overlay */}
+      <Overlay
+        isOpen={showSuccessOverlay}
+        onClose={closeSuccessOverlay}
+        title="Herausforderung gesendet!"
+      >
+        <p className="mb-6">
+          Eine E-Mail wurde an{" "}
+          <span className="font-semibold">{lastChallengedEmail}</span>{" "}
+          verschickt.
+        </p>
+
+        <div className="flex flex-col gap-3">
+          <button
+            onClick={closeSuccessOverlay}
+            className="px-6 py-2 bg-main-pink text-white rounded-md w-full transition-all hover:bg-fuchsia-800"
+          >
+            Verstanden
+          </button>
+        </div>
+      </Overlay>
     </div>
   );
 }

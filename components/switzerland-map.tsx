@@ -211,8 +211,8 @@ export default function SwitzerlandMap({
             }}
           >
             <TileLayer
-              url="https://{s}.basemaps.cartocdn.com/light_nolabels/{z}/{x}/{y}{r}.png"
-              attribution="&copy; <a href='https://carto.com/'>Carto</a>"
+              url="https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Light_Gray_Base/MapServer/tile/{z}/{y}/{x}"
+              attribution="&copy; <a href='https://arcgisonline.com/'>Arcgisonline</a>"
             />
 
             {switzerlandGeoJSON && (

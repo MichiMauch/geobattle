@@ -8,6 +8,9 @@ import { calculateDistance } from "@/lib/distance";
 import type { City } from "@/types/game";
 import HighscoreList from "@/components/highscore-list";
 import { useGameContext } from "@/context/game-context";
+import { calculateScore } from "@/lib/scoring";
+import { GAME_CONFIG } from "@/lib/config";
+import LoginOverlay from "@/components/login-overlay";
 
 export default function GeoBattle({
   activeDuelId,
@@ -32,10 +35,76 @@ export default function GeoBattle({
   const [highscores, setHighscores] = useState<
     { userName: string; score: number }[]
   >([]);
-  const MAX_ROUNDS = 2;
+  const MAX_ROUNDS = GAME_CONFIG.MAX_ROUNDS;
   const { data: session } = useSession();
   const [highscoreUpdated, setHighscoreUpdated] = useState(false);
   const [mapError, setMapError] = useState(false);
+  const [showLoginOverlay, setShowLoginOverlay] = useState(false);
+
+  // Check for saved game state on component mount
+  useEffect(() => {
+    if (session?.user) {
+      const savedGameState = localStorage.getItem("pendingGameState");
+      if (savedGameState) {
+        try {
+          const { savedScore, savedRoundScores } = JSON.parse(savedGameState);
+          // Only restore if we have valid data
+          if (
+            typeof savedScore === "number" &&
+            Array.isArray(savedRoundScores)
+          ) {
+            setScore(savedScore);
+            setRoundScores(savedRoundScores);
+            setGameOver(true);
+            // Now we can save the score
+            if (session.user.name) {
+              saveScoreToServer(savedScore, session.user.name);
+            }
+          }
+          // Clear the saved state
+          localStorage.removeItem("pendingGameState");
+        } catch (error) {
+          console.error("Error parsing saved game state:", error);
+          localStorage.removeItem("pendingGameState");
+        }
+      }
+    }
+  }, [session]);
+
+  // Add a function to save score to server
+  const saveScoreToServer = async (scoreToSave: number, userName: string) => {
+    await fetch("/api/highscore", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ userName, score: scoreToSave }),
+    });
+
+    setScoreSaved(true);
+    setShowHighscores(true);
+    // Force re-fetch of highscores
+    setHighscores((prev) => [...prev, { userName, score: scoreToSave }]);
+  };
+
+  // Modify the saveScore function
+  const saveScore = async () => {
+    // Check if user is logged in
+    if (!session?.user?.name) {
+      // Save current game state to localStorage before redirecting to login
+      localStorage.setItem(
+        "pendingGameState",
+        JSON.stringify({
+          savedScore: score,
+          savedRoundScores: roundScores,
+        })
+      );
+      setShowLoginOverlay(true);
+      return;
+    }
+
+    if (activeDuelId !== null) return; // Not in a duel
+
+    await saveScoreToServer(score, session.user.name);
+  };
 
   useEffect(() => {
     startNewRound();
@@ -83,7 +152,7 @@ export default function GeoBattle({
 
     setDistance(dist);
 
-    const roundScore = Math.max(0, Math.round(1000 - dist * 20));
+    const roundScore = calculateScore(dist);
     setScore((prev) => prev + roundScore);
     setRoundScores((prev) => [...prev, roundScore]);
 
@@ -128,24 +197,6 @@ export default function GeoBattle({
     setActiveDuelId(null);
   }
 
-  const saveScore = async () => {
-    if (!session?.user?.name || activeDuelId !== null) return; // Ensure userName is a string and not in a duel
-
-    await fetch("/api/highscore", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ userName: session.user.name, score }),
-    });
-
-    setScoreSaved(true);
-    setShowHighscores(true);
-    // Force re-fetch of highscores
-    setHighscores((prev) => [
-      ...prev,
-      { userName: session.user!.name as string, score },
-    ]);
-  };
-
   const restartGame = () => {
     setRound(1);
     setScore(0);
@@ -164,6 +215,12 @@ export default function GeoBattle({
 
   return (
     <div className="w-full h-screen">
+      {/* Login Overlay */}
+      <LoginOverlay
+        isOpen={showLoginOverlay}
+        onClose={() => setShowLoginOverlay(false)}
+      />
+
       {/* Main container with responsive grid */}
       <div className="grid grid-cols-1 md:grid-cols-4 h-full">
         {/* Map column - 75% on desktop (3/4 columns) */}
@@ -258,7 +315,7 @@ export default function GeoBattle({
                     onClick={nextRound}
                     className="px-6 py-2 bg-main-blue text-white rounded-md w-full transition-all hover:bg-main-blueDarker2"
                   >
-                    {round < MAX_ROUNDS ? "Nächste Stadt" : "Ergebnis anzeigen"}
+                    {round < MAX_ROUNDS ? "Nächster POI" : "Ergebnis anzeigen"}
                   </button>
                 </div>
               )}
