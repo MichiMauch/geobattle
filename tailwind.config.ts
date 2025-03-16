@@ -24,8 +24,11 @@ const config: Config = {
 				dark5: '#1b1634', // Fast schwarzes Violett
 				pink: '#ff40b4',  // Leuchtendes Pink (Akzentfarbe)
 				purple: '#7a2db8', // Sattes Lila (Verlauf)
-				blue: '#1e90ff',   // Helles Blau (Verlauf)
-				gradientStart: '#ff40b4', // Startfarbe des Farbverlaufs
+				blueLighter2: '#82c7ff', // Sehr helles Blau
+				blueLighter1: '#4aadff', // Etwas helleres Blau
+				blue: '#1e90ff',         // Original Blau
+				blueDarker1: '#1673cc',  // Etwas dunkleres Blau
+				blueDarker2: '#105699',  // Sehr dunkles Blau				gradientStart: '#ff40b4', // Startfarbe des Farbverlaufs
 				gradientEnd: '#1e90ff',   // Endfarbe des Farbverlaufs
 			  },
 			background: 'hsl(var(--background))',

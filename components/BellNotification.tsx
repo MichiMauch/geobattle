@@ -21,7 +21,12 @@ export default function BellNotification({
     async function fetchDuelCount() {
       try {
         const res = await fetch("/api/duel/duels");
-        if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+        if (!res.ok) {
+          const errorText = await res.text();
+          throw new Error(
+            `HTTP error! status: ${res.status}, message: ${errorText}`
+          );
+        }
 
         const data = await res.json();
         setDuelCount(data.duels?.length || 0);

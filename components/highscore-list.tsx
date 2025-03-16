@@ -31,12 +31,25 @@ export default function HighscoreList({
       try {
         const res = await fetch("/api/highscore");
         if (!res.ok) {
-          throw new Error(`HTTP error! status: ${res.status}`);
+          const errorText = await res.text();
+          throw new Error(
+            `HTTP error! status: ${res.status}, message: ${errorText}`
+          );
         }
         const data = await res.json();
         setHighscores(data.highscores);
       } catch (error) {
         console.error("Fehler beim Laden der Highscores:", error);
+        if (
+          error instanceof Error &&
+          error.message.includes("Database error")
+        ) {
+          setMessage("Datenbankfehler: Bitte versuchen Sie es später erneut.");
+        } else if (error instanceof Error && error.message.includes("404")) {
+          setMessage("API-Route nicht gefunden: Bitte überprüfen Sie die URL.");
+        } else {
+          setMessage("Ein unbekannter Fehler ist aufgetreten.");
+        }
       } finally {
         setLoading(false);
       }
@@ -112,7 +125,7 @@ export default function HighscoreList({
         {topThreeHighscores.map((highscore, index) => (
           <div
             key={index}
-            className="flex justify-between items-center bg-gray-50 p-3 rounded"
+            className="text-fuchsia-600 flex justify-between items-center bg-gray-50 p-3 rounded"
           >
             <span>
               {index + 1}. {highscore.userName}
@@ -124,8 +137,8 @@ export default function HighscoreList({
 
       {currentUserHighscore && (
         <div className="mt-6">
-          <h3 className="text-lg font-semibold mb-3">Dein Platzz</h3>
-          <div className="flex justify-between items-center bg-gray-50 p-3 rounded">
+          <h3 className="text-lg font-semibold mb-3">Dein Platz</h3>
+          <div className="text-fuchsia-600 flex justify-between items-center bg-gray-50 p-3 rounded">
             <span>
               {actualRank}. {currentUserHighscore.userName}
             </span>
@@ -140,7 +153,7 @@ export default function HighscoreList({
       {currentUserScore > 0 && (
         <div className="mt-6">
           <button
-            className="bg-blue-500 text-white px-4 py-2 rounded"
+            className="bg-main-blue text-white px-4 py-2 w-full rounded hover:bg-main-blueDarker2"
             onClick={() => setShowChallengeForm(true)}
           >
             Jemanden herausfordern
@@ -158,7 +171,7 @@ export default function HighscoreList({
             className="border p-2 rounded w-full mb-2"
           />
           <button
-            className="bg-green-500 text-white px-4 py-2 rounded w-full"
+            className="bg-main-pink text-white px-4 py-2 rounded w-full hover:bg-fuchsia-800 "
             onClick={handleChallengeSubmit}
           >
             Herausforderung senden

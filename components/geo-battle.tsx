@@ -28,12 +28,14 @@ export default function GeoBattle({
   const [gameOver, setGameOver] = useState(false);
   const [roundScores, setRoundScores] = useState<number[]>([]);
   const [scoreSaved, setScoreSaved] = useState(false);
+  const [showHighscores, setShowHighscores] = useState(false);
   const [highscores, setHighscores] = useState<
     { userName: string; score: number }[]
   >([]);
   const MAX_ROUNDS = 2;
   const { data: session } = useSession();
   const [highscoreUpdated, setHighscoreUpdated] = useState(false);
+  const [mapError, setMapError] = useState(false);
 
   useEffect(() => {
     startNewRound();
@@ -136,6 +138,7 @@ export default function GeoBattle({
     });
 
     setScoreSaved(true);
+    setShowHighscores(true);
     // Force re-fetch of highscores
     setHighscores((prev) => [
       ...prev,
@@ -149,45 +152,127 @@ export default function GeoBattle({
     setGameOver(false);
     setRoundScores([]);
     setShowResult(false);
-    setScoreSaved(false); // Reset scoreSaved
+    setScoreSaved(false);
+    setShowHighscores(false);
     startNewRound();
   };
 
+  const handleMapError = () => {
+    setMapError(true);
+    console.error("Map failed to load properly");
+  };
+
   return (
-    <div className="flex flex-col h-screen relative">
-      <div className="text-center">
-        {currentCity && !showResult && (
-          <h2 className="text-xl font-semibold">
-            Wo liegt {currentCity.name}?
-          </h2>
-        )}
-      </div>
-
-      <div className="flex-1 relative z-0">
-        <SwitzerlandMap
-          onSelectPoint={handlePointSelect}
-          selectedPoint={selectedPoint}
-          actualCity={showResult ? currentCity : null}
-        />
-        <div className="flex flex-col items-center text-center space-y-2">
-          <div className="text-lg font-medium">
-            Runde: {round}/{MAX_ROUNDS}
+    <div className="w-full h-screen">
+      {/* Main container with responsive grid */}
+      <div className="grid grid-cols-1 md:grid-cols-4 h-full">
+        {/* Map column - 75% on desktop (3/4 columns) */}
+        <div className="md:col-span-3 flex flex-col h-full relative">
+          <div className="flex-1 relative z-0 w-full">
+            <div className="h-full w-full">
+              <SwitzerlandMap
+                onSelectPoint={handlePointSelect}
+                selectedPoint={selectedPoint}
+                actualCity={showResult ? currentCity : null}
+                key={`map-${session?.user?.email || "guest"}-${round}`}
+                onError={handleMapError}
+              />
+              {mapError && (
+                <div className="absolute inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+                  <div className="text-center p-6">
+                    <h3 className="text-xl font-bold mb-4">
+                      Karte konnte nicht geladen werden
+                    </h3>
+                    <p className="mb-4">
+                      Bitte versuche die Seite neu zu laden.
+                    </p>
+                    <button
+                      onClick={() => window.location.reload()}
+                      className="px-6 py-2 bg-blue-600 text-white rounded-md"
+                    >
+                      Seite neu laden
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
           </div>
-          <div className="text-lg font-medium">Punkte: {score}</div>
-
-          {currentCity && !showResult && (
-            <h2 className="text-xl font-semibold mt-2">
-              Wo liegt {currentCity.name}?
-            </h2>
-          )}
         </div>
 
-        {gameOver && (
-          <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center z-[1000]">
-            <div className="bg-white p-6 rounded shadow-lg text-center">
-              <h2 className="text-2xl font-bold mb-4">Spiel beendet!</h2>
+        {/* Info column - 25% on desktop (1/4 columns) */}
+        <div className="md:col-span-1 bg-main-dark1 p-4 flex flex-col overflow-y-auto text-white relative overflow-hidden border-t border-main-pink">
+          {/* Gradient background effects */}
+          <div
+            aria-hidden="true"
+            className="absolute left-0 top-1/2 -z-10 -translate-y-1/2 transform-gpu blur-3xl"
+          >
+            <div
+              style={{
+                clipPath:
+                  "polygon(74.8% 41.9%, 97.2% 73.2%, 100% 34.9%, 92.5% 0.4%, 87.5% 0%, 75% 28.6%, 58.5% 54.6%, 50.1% 56.8%, 46.9% 44%, 48.3% 17.4%, 24.7% 53.9%, 0% 27.9%, 11.9% 74.2%, 24.9% 54.1%, 68.6% 100%, 74.8% 41.9%)",
+              }}
+              className="aspect-[577/310] w-[36.0625rem] bg-gradient-to-r from-main-pink via-main-purple to-main-blue opacity-40"
+            />
+          </div>
+          <div
+            aria-hidden="true"
+            className="absolute left-[max(45rem,calc(50%+8rem))] top-1/2 -z-10 -translate-y-1/2 transform-gpu blur-3xl"
+          >
+            <div
+              style={{
+                clipPath:
+                  "polygon(74.8% 41.9%, 97.2% 73.2%, 100% 34.9%, 92.5% 0.4%, 87.5% 0%, 75% 28.6%, 58.5% 54.6%, 50.1% 56.8%, 46.9% 44%, 48.3% 17.4%, 24.7% 53.9%, 0% 27.9%, 11.9% 74.2%, 24.9% 54.1%, 68.6% 100%, 74.8% 41.9%)",
+              }}
+              className="aspect-[577/310] w-[36.0625rem] bg-gradient-to-r from-main-pink via-main-purple to-main-blue opacity-40"
+            />
+          </div>
+          {/* Game controls - moved from below the map to the right column */}
+          {!gameOver && (
+            <div className="text-left mb-6">
+              {!showResult ? (
+                <div>
+                  {currentCity && (
+                    <h2 className="text-xl font-semibold mb-4 text-main-pink">
+                      Wo liegt {currentCity.name}?
+                    </h2>
+                  )}
+                  <button
+                    onClick={checkAnswer}
+                    disabled={!selectedPoint}
+                    className="px-6 py-2 bg-main-pink text-white rounded-md w-full disabled:bg-gray-600 disabled:cursor-not-allowed transition-all hover:bg-fuchsia-800"
+                  >
+                    Antwort prüfen
+                  </button>
+                </div>
+              ) : (
+                <div>
+                  <div className="text-xl font-bold mb-2 text-main-pink">
+                    Du warst {distance?.toFixed(2)} km von {currentCity?.name}{" "}
+                    entfernt!
+                  </div>
+                  <div className="text-lg mb-4">
+                    Punkte in dieser Runde:{" "}
+                    {Math.max(0, Math.round(1000 - (distance || 0) * 20))}
+                  </div>
+                  <button
+                    onClick={nextRound}
+                    className="px-6 py-2 bg-main-blue text-white rounded-md w-full transition-all hover:bg-main-blueDarker2"
+                  >
+                    {round < MAX_ROUNDS ? "Nächste Stadt" : "Ergebnis anzeigen"}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
 
-              <h3 className="text-lg font-semibold mb-3">
+          {/* Game over content - only shown at the end of the game */}
+          {gameOver && (
+            <div className="text-left">
+              <h2 className="text-2xl font-bold mb-4 text-main-pink">
+                Spiel beendet!
+              </h2>
+
+              <h3 className="text-lg font-semibold mb-3 text-main-pink">
                 Ergebnisse pro Runde
               </h3>
               <ul className="mb-4">
@@ -198,60 +283,40 @@ export default function GeoBattle({
                 ))}
               </ul>
 
-              <h3 className="text-xl font-semibold">Gesamtpunkte: {score}</h3>
+              <h3 className="text-xl font-semibold mb-4 text-main-pink">
+                Gesamtpunkte: {score}
+              </h3>
 
-              <HighscoreList
-                currentUserName={session?.user?.name || "Unknown User"}
-                currentUserEmail={session?.user?.email || "unknown@example.com"}
-                currentUserScore={score}
-                highscoreUpdated={highscoreUpdated} // Neuer Prop für Aktualisierung
-              />
-
-              {!scoreSaved && (
+              <div className="flex flex-col gap-2 mb-4">
+                {!scoreSaved && (
+                  <button
+                    onClick={saveScore}
+                    className="px-6 py-2 bg-main-pink text-white rounded-md w-full transition-all hover:bg-fuchsia-800"
+                  >
+                    Score speichern
+                  </button>
+                )}
                 <button
-                  onClick={saveScore}
-                  className="px-6 py-2 bg-blue-600 text-white rounded-md mt-4"
+                  onClick={restartGame}
+                  className="px-6 py-2 bg-main-blue text-white rounded-md w-full transition-all hover:bg-main-blueDarker2"
                 >
-                  Score speichern
+                  Spiel neu starten
                 </button>
-              )}
-              <button
-                onClick={restartGame}
-                className="px-6 py-2 bg-red-600 text-white rounded-md mt-4"
-              >
-                Spiel neu starten
-              </button>
-            </div>
-          </div>
-        )}
-      </div>
+              </div>
 
-      <div className="p-4 bg-white z-20">
-        <div className="flex flex-col items-center">
-          {!showResult ? (
-            <button
-              onClick={checkAnswer}
-              disabled={!selectedPoint}
-              className="px-6 py-2 bg-blue-600 text-white rounded-md disabled:bg-gray-400 disabled:cursor-not-allowed"
-            >
-              Antwort prüfen
-            </button>
-          ) : (
-            <div className="text-center">
-              <div className="text-xl font-bold mb-2">
-                Du warst {distance?.toFixed(2)} km von {currentCity?.name}{" "}
-                entfernt!
-              </div>
-              <div className="text-lg mb-4">
-                Punkte in dieser Runde:{" "}
-                {Math.max(0, Math.round(1000 - (distance || 0) * 20))}
-              </div>
-              <button
-                onClick={nextRound}
-                className="px-6 py-2 bg-green-600 text-white rounded-md"
-              >
-                {round < MAX_ROUNDS ? "Nächste Stadt" : "Ergebnis anzeigen"}
-              </button>
+              {/* Highscore list - only shown after saving the score */}
+              {showHighscores && (
+                <div className="mt-6">
+                  <HighscoreList
+                    currentUserName={session?.user?.name || "Unknown User"}
+                    currentUserEmail={
+                      session?.user?.email || "unknown@example.com"
+                    }
+                    currentUserScore={score}
+                    highscoreUpdated={highscoreUpdated}
+                  />
+                </div>
+              )}
             </div>
           )}
         </div>

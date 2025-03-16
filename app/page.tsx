@@ -9,11 +9,9 @@ export default function Home() {
   const [activeDuelId, setActiveDuelId] = useState<number | null>(null);
 
   return (
-    <main className="flex flex-col min-h-screen items-center justify-center p-4">
-      <div className="mb-6">
-        {status === "loading" && <p>Lädt...</p>}
-        {/* Anmelden/Abmelden Teil entfernt */}
-      </div>
+    <main className="flex flex-col min-h-screen items-center justify-center bg-main-blueDarker1">
+      {status === "loading" && <p>Lädt...</p>}
+      {/* Anmelden/Abmelden Teil entfernt */}
       <GeoBattle
         activeDuelId={activeDuelId}
         setActiveDuelId={setActiveDuelId}

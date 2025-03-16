@@ -2,8 +2,7 @@
 
 import { useState } from "react";
 import { useSession, signIn, signOut } from "next-auth/react";
-import { Dialog, DialogPanel } from "@headlessui/react";
-import { Bars3Icon, XMarkIcon } from "@heroicons/react/24/outline";
+import { Bars3Icon } from "@heroicons/react/24/outline";
 import { ChevronDown } from "lucide-react";
 import {
   DropdownMenu,
@@ -12,6 +11,14 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import BellNotification from "@/components/BellNotification";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetClose,
+} from "@/components/ui/sheet";
+import { X } from "lucide-react";
 
 const navigation = [
   { name: "Home", href: "/" },
@@ -28,16 +35,7 @@ export default function Header() {
   const { data: session, status } = useSession();
 
   return (
-    <header className="relative bg-main-dark1">
-      {/* Hintergrund mit Glow & Farbverlauf */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10 overflow-hidden"
-      >
-        <div className="absolute left-[max(-7rem,calc(50%-52rem))] top-1/2 -translate-y-1/2 transform-gpu blur-3xl opacity-40 w-[50rem] h-[30rem] bg-gradient-to-r from-main-gradientStart to-main-gradientEnd" />
-        <div className="absolute left-[max(45rem,calc(50%+8rem))] top-1/2 -translate-y-1/2 transform-gpu blur-3xl opacity-40 w-[50rem] h-[30rem] bg-gradient-to-r from-main-gradientStart to-main-gradientEnd" />
-      </div>
-
+    <header className="relative bg-gradient-to-r  from-main-dark1 via-main-purple to-main-dark1">
       <nav className="mx-auto flex max-w-7xl items-center justify-between p-6 lg:px-8">
         <div className="flex lg:flex-1">
           <a href="/" className="-m-1.5 p-1.5">
@@ -132,6 +130,104 @@ export default function Header() {
           )}
         </div>
       </nav>
+      {/* Mobile menu */}
+      <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+        <SheetContent side="left" className="bg-main-dark1 border-main-purple">
+          <SheetHeader className="border-b border-main-purple pb-4 mb-4">
+            <SheetTitle className="text-white flex items-center justify-between">
+              <a href="/" className="flex items-center">
+                <img
+                  alt="GeoBattle Logo"
+                  src="/images/logos/geobattle.webp"
+                  className="max-h-10 w-auto"
+                />
+              </a>
+              <SheetClose className="rounded-full p-1 hover:bg-main-purple/20">
+                <X className="h-5 w-5 text-white" />
+              </SheetClose>
+            </SheetTitle>
+          </SheetHeader>
+
+          <div className="py-4 flex flex-col gap-4">
+            {navigation.map((item) => (
+              <a
+                key={item.name}
+                href={item.href}
+                className="text-base font-semibold text-white hover:text-main-pink"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                {item.name}
+              </a>
+            ))}
+
+            <div className="pt-4 border-t border-main-purple mt-2">
+              {session?.user ? (
+                <div className="flex flex-col gap-4">
+                  <div className="flex items-center gap-3">
+                    <img
+                      src={session.user.image ?? "/default-image.png"}
+                      alt="User Image"
+                      className="w-8 h-8 rounded-full"
+                    />
+                    <span className="text-white font-bold">
+                      {session.user.name}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <BellNotification
+                      setActiveDuelId={(id) => {
+                        setMobileMenuOpen(false);
+                        window.location.href = "/";
+                      }}
+                    />
+                    <span className="text-white text-sm">Notifications</span>
+                  </div>
+                  {userNavigation.map((item) => (
+                    <a
+                      key={item.name}
+                      href={item.href}
+                      className="text-base font-semibold text-white hover:text-main-pink"
+                      onClick={(e) => {
+                        if (item.action) {
+                          e.preventDefault();
+                          item.action();
+                        }
+                        setMobileMenuOpen(false);
+                      }}
+                    >
+                      {item.name}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <button
+                  className="rounded bg-main-gradientStart hover:bg-main-gradientEnd text-white px-3 py-2 flex items-center"
+                  onClick={() => {
+                    signIn("google");
+                    setMobileMenuOpen(false);
+                  }}
+                >
+                  Login mit Google
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth={1.5}
+                    stroke="currentColor"
+                    className="w-4 h-4 ml-2"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M13.5 4.5l6 6m0 0l-6 6m6-6H3"
+                    />
+                  </svg>
+                </button>
+              )}
+            </div>
+          </div>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 }
